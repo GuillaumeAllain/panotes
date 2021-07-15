@@ -112,4 +112,25 @@ function m.export_to_org()
     api.nvim_command("e")
 end
 
+function panotes_complete(arglead, cmdline, cursorpos)
+        return api.nvim_call_function("join",{{"openDiary",
+                                               "openJournal",
+                                               "openTagInput",
+                                               "searchTags",
+                                               "export_to_org"},"\n"})
+end
+
+function m.load_command(command)
+    vim.cmd("lua require('panotes')."..command.."()")
+end
+
+local function make_commands()
+    vim.cmd [[command! -nargs=* -complete=custom,v:lua.panotes_complete Panotes    lua require('panotes').load_command(<f-args>)]]
+end
+
+function m.setup()
+end
+
+make_commands()
+
 return m
