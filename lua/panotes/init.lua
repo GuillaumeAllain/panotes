@@ -4,7 +4,6 @@ local _show_tags = require("telescope.builtin").tags
 local m = {}
 
 function m.change_cwd_to_notes_dir()
-    -- vim.cmd("e" .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
     vim.cmd("cd $NOTES_DIR/")
 end
 
@@ -180,15 +179,28 @@ function m.openTagInput()
 end
 
 function m.searchTags()
-    m.change_cwd_to_notes_dir()
-    _show_tags({ ctags_file = vim.fn.tagfiles()[1] })
+    vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+    _show_tags({
+        ctags_file = vim.fn.tagfiles()[1],
+        attach_mappings = function(prompt_bufnr)
+            require("telescope.actions.set").select:enhance({
+                post = function()
+                    if vim.api.nvim_buf_get_name(0) ~= "" then
+                        vim.cmd("bd " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                    end
+                end,
+            })
+            require("telescope.actions").close:enhance({
+                post = function()
+                    if vim.api.nvim_buf_get_name(0) ~= "" then
+                        vim.cmd("bd " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                    end
+                end,
+            })
+            return true
+        end,
+    })
 end
-
--- function m.export_to_org()
--- 	api.nvim_command("w!")
--- 	local result = vim.fn.systemlist("panotes exporttodo")
--- 	api.nvim_command("e")
--- end
 
 function _G.Panotes_complete(arglead, cmdline, cursorpos)
     return api.nvim_call_function(
