@@ -4,7 +4,8 @@ local _show_tags = require("telescope.builtin").tags
 local m = {}
 
 function m.change_cwd_to_notes_dir()
-	vim.cmd("e" .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+    -- vim.cmd("e" .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+    vim.cmd("cd $NOTES_DIR/")
 end
 
 local function _opentemppandocbuff(loctable)
