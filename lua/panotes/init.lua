@@ -113,7 +113,7 @@ local function _open_file_buffer(filename)
 
     if not already_open then
         buffer_number = vim.api.nvim_create_buf(true, false)
-        vim.api.nvim_buf_set_name(buffer_number, vim.fn.expand(filename))
+        vim.api.nvim_buf_set_name(buffer_number, vim.fn.fnameescape(vim.fn.expand(filename)))
         vim.api.nvim_buf_set_option(buffer_number, "filetype", "pandoc")
         if vim.fn.filereadable(filename) == 1 then
             vim.api.nvim_buf_call(buffer_number, function()
@@ -170,12 +170,13 @@ function m.openJournal()
 end
 
 function m.openTagInput()
-    m.change_cwd_to_notes_dir()
+    vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
     local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
     if taginput == nil then
         return
     end
     _openTag(taginput)
+    vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
 end
 
 function m.searchTags()
@@ -186,14 +187,14 @@ function m.searchTags()
             require("telescope.actions.set").select:enhance({
                 post = function()
                     if vim.api.nvim_buf_get_name(0) ~= "" then
-                        vim.cmd("bd " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
                     end
                 end,
             })
             require("telescope.actions").close:enhance({
                 post = function()
                     if vim.api.nvim_buf_get_name(0) ~= "" then
-                        vim.cmd("bd " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
                     end
                 end,
             })
@@ -286,12 +287,12 @@ function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
     local current_dir = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/"))
     local current_dir_arg = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/" .. arglead))
     if vim.fn.isdirectory(current_dir_arg) == 1 then
-        output = scandir.scan_dir(current_dir_arg, { only_dirs = true, depth = 1 })
+        output = scandir.scan_dir(current_dir_arg, { add_dirs = true, depth = 1 })
         for index, _ in ipairs(output) do
             output[index] = arglead .. (string.gsub(output[index], current_dir_arg .. "/", ""))
         end
     elseif vim.fn.isdirectory(current_dir) == 1 then
-        local input = scandir.scan_dir(current_dir, { only_dirs = true, depth = 1 })
+        local input = scandir.scan_dir(current_dir, { add_dirs = true, depth = 1 })
         for index, _ in ipairs(input) do
             input[index] = (string.gsub(input[index], current_dir .. "/", ""))
             if input[index]:find(arglead) then
@@ -301,6 +302,7 @@ function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
     end
     return api.nvim_call_function("join", { output, "\n" })
 end
+
 
 function m.close_capture(buf, bufname, winname, winnamename)
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -326,7 +328,7 @@ function m.close_capture(buf, bufname, winname, winnamename)
             completion = "custom,v:lua.Panotes_folders_complete",
         })
         vim.api.nvim_command("redraw")
-        local buffer_info = _open_file_buffer(vim.fn.expand("$NOTES_DIR/") .. filename .. ".md")
+        local buffer_info = _open_file_buffer(vim.fn.expand("$NOTES_DIR/") .. filename)
         _append_to_buffer(buffer_info, lines)
     end
 end
