@@ -5,11 +5,10 @@ local function _get_pandoc_command(regex)
 		"/usr/local/bin/pandoc",
 		"-M greppattern=" .. regex,
 		"-M block_top=" .. 2,
-		"-L ~/.local/share/pandot/filters/greppattern.lua ",
+		"-L "..pandoc_filters_path.."greppattern.lua ",
 		"--shift-heading-level-by=1 ",
 		"-t markdown+yaml_metadata_block-grid_tables-simple_tables-multiline_tables-latex_macros",
-		'--data-dir="' .. vim.fn.expand(vim.fn.environ().XDG_DATA_HOME) .. '/pandot"',
-		"-L math_spaces.lua",
+		"-L "..pandoc_filters_path.."math_spaces.lua ",
 		"--markdown-headings=atx --wrap=preserve -V header-includes= -V include-before= -V include-after= ",
 	}
 	return vim.api.nvim_call_function("join", { pandoc_command, " " })
