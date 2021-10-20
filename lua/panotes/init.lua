@@ -170,6 +170,7 @@ function m.openJournal()
 end
 
 function m.openTagInput()
+    local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
     local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
     if taginput == nil then
@@ -177,9 +178,13 @@ function m.openTagInput()
     end
     _openTag(taginput)
     vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+    if altfile ~= "" then
+        vim.fn.setreg("#",altfile)
+    end
 end
 
 function m.searchTags()
+    local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
     _show_tags({
         ctags_file = vim.fn.tagfiles()[1],
@@ -201,6 +206,9 @@ function m.searchTags()
             return true
         end,
     })
+    if altfile ~= "" then
+        vim.fn.setreg("#",altfile)
+    end
 end
 
 function _G.Panotes_complete(arglead, cmdline, cursorpos)
