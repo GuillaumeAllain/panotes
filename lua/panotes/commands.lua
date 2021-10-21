@@ -204,6 +204,34 @@ function m.openTagInput()
     end
 end
 
+function m.liveGrep()
+    local altfile = vim.fn.getreg("%")
+    vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+    require('telescope.builtin').live_grep{
+            ctags_file = vim.fn.tagfiles()[1],
+            attach_mappings = function(prompt_bufnr)
+                require("telescope.actions.set").select:enhance({
+                    post = function()
+                        if vim.api.nvim_buf_get_name(0) ~= "" then
+                            vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        end
+                    end,
+                })
+                require("telescope.actions").close:enhance({
+                    post = function()
+                        if vim.api.nvim_buf_get_name(0) ~= "" then
+                            vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        end
+                    end,
+                })
+                return true
+            end,
+}
+    if altfile ~= "" then
+        vim.fn.setreg("#",altfile)
+    end
+end
+
 function m.searchTags()
     local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
@@ -213,14 +241,14 @@ function m.searchTags()
             require("telescope.actions.set").select:enhance({
                 post = function()
                     if vim.api.nvim_buf_get_name(0) ~= "" then
-                        vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
                     end
                 end,
             })
             require("telescope.actions").close:enhance({
                 post = function()
                     if vim.api.nvim_buf_get_name(0) ~= "" then
-                        vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                        vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
                     end
                 end,
             })

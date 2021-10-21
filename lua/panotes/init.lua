@@ -3,7 +3,7 @@ local m = {}
 function _G.Panotes_complete(arglead, cmdline, cursorpos)
     return vim.aapi.nvim_call_function(
         "join",
-        { { "openDiary", "openJournal", "openTagInput", "searchTags"}, "\n" }
+        { { "openDiary", "openJournal", "openTagInput", "searchTags", "liveGrep"}, "\n" }
     )
 end
 
@@ -13,8 +13,10 @@ local function make_commands()
     )
 end
 
-function m.setup() end
+function m.setup()
+    make_commands()
+end
 
-make_commands()
+
 
 return m
