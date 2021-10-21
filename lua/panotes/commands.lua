@@ -7,18 +7,6 @@ function m.change_cwd_to_notes_dir()
     vim.cmd("cd $NOTES_DIR/")
 end
 
-local function _opentemppandocbuff(loctable)
-    api.nvim_command("silent enew")
-    api.nvim_buf_set_lines(0, 0, -1, false, loctable)
-    vim.bo[0].filetype = "pandoc"
-    vim.bo[0].buftype = "nofile"
-    vim.bo[0].bufhidden = "delete"
-    vim.bo[0].swapfile = false
-    vim.bo[0].readonly = true
-    vim.bo[0].modifiable = false
-    vim.bo[0].buflisted = false
-end
-
 function _G.Panotes_tags(arglead, cmdline, cursorpos)
     local taglist_raw = vim.fn.taglist("/*", vim.fn.tagfiles()[1])
     local taglist_processed = {}
@@ -35,6 +23,39 @@ function _G.Panotes_tags(arglead, cmdline, cursorpos)
         end
     end
     return api.nvim_call_function("join", { taglist_processed, "\n" })
+end
+
+function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
+    local output = {}
+    local current_dir = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/"))
+    local current_dir_arg = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/" .. arglead))
+    if vim.fn.isdirectory(current_dir_arg) == 1 then
+        output = scandir.scan_dir(current_dir_arg, { add_dirs = true, depth = 1 })
+        for index, _ in ipairs(output) do
+            output[index] = arglead .. (string.gsub(output[index], current_dir_arg .. "/", ""))
+        end
+    elseif vim.fn.isdirectory(current_dir) == 1 then
+        local input = scandir.scan_dir(current_dir, { add_dirs = true, depth = 1 })
+        for index, _ in ipairs(input) do
+            input[index] = (string.gsub(input[index], current_dir .. "/", ""))
+            if input[index]:find(arglead) then
+                output[#output + 1] = input[index]
+            end
+        end
+    end
+    return api.nvim_call_function("join", { output, "\n" })
+end
+
+local function _opentemppandocbuff(loctable)
+    api.nvim_command("silent enew")
+    api.nvim_buf_set_lines(0, 0, -1, false, loctable)
+    vim.bo[0].filetype = "pandoc"
+    vim.bo[0].buftype = "nofile"
+    vim.bo[0].bufhidden = "delete"
+    vim.bo[0].swapfile = false
+    vim.bo[0].readonly = true
+    vim.bo[0].modifiable = false
+    vim.bo[0].buflisted = false
 end
 
 local function _panotes_file_list(input_tag)
@@ -211,18 +232,6 @@ function m.searchTags()
     end
 end
 
-function _G.Panotes_complete(arglead, cmdline, cursorpos)
-    return api.nvim_call_function(
-        "join",
-        { { "openDiary", "openJournal", "openTagInput", "searchTags", "export_to_org" }, "\n" }
-    )
-end
-
-function m.load_command(command)
-    vim.cmd("lua require('panotes')." .. command .. "()")
-end
-
-
 function m.get_capture_buffer()
     -- Returns build terminal handle. If not found, it creates it
     local buffer_list = vim.fn.getbufinfo()
@@ -285,28 +294,6 @@ local function _append_to_buffer(buffer_info, lines)
     end
 end
 
-function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
-    local output = {}
-    local current_dir = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/"))
-    local current_dir_arg = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/" .. arglead))
-    if vim.fn.isdirectory(current_dir_arg) == 1 then
-        output = scandir.scan_dir(current_dir_arg, { add_dirs = true, depth = 1 })
-        for index, _ in ipairs(output) do
-            output[index] = arglead .. (string.gsub(output[index], current_dir_arg .. "/", ""))
-        end
-    elseif vim.fn.isdirectory(current_dir) == 1 then
-        local input = scandir.scan_dir(current_dir, { add_dirs = true, depth = 1 })
-        for index, _ in ipairs(input) do
-            input[index] = (string.gsub(input[index], current_dir .. "/", ""))
-            if input[index]:find(arglead) then
-                output[#output + 1] = input[index]
-            end
-        end
-    end
-    return api.nvim_call_function("join", { output, "\n" })
-end
-
-
 function m.close_capture(buf, bufname, winname, winnamename)
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     table.insert(lines, 1, "")
@@ -365,6 +352,10 @@ function m.capture()
 	autocmd WinClosed,BufDelete,WinLeave <buffer=]] .. buf .. "> ++once lua require'panotes'.close_capture(" .. buf .. "," .. bufname .. [[)
         augroup END]])
     vim.api.nvim_feedkeys("i", "t", false)
+end
+
+function m.load_command(command)
+    vim.cmd("lua require('panotes.commands')." .. command .. "()")
 end
 
 return m
