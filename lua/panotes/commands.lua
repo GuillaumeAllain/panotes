@@ -377,7 +377,7 @@ function m.capture()
     local window_name_name = vim.api.nvim_open_win(bufname, false, window_name_config)
     vim.cmd([[augroup panotescapture
 	    au!
-	autocmd WinClosed,BufDelete,WinLeave <buffer=]] .. buf .. "> ++once lua require'panotes'.close_capture(" .. buf .. "," .. bufname .. [[)
+	autocmd WinClosed,BufDelete,WinLeave <buffer=]] .. buf .. "> ++once lua require'panotes.commands'.close_capture(" .. buf .. "," .. bufname .. [[)
         augroup END]])
     vim.api.nvim_feedkeys("i", "t", false)
 end
