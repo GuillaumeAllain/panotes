@@ -92,7 +92,15 @@ local function _get_datetime_from_journal_filename(path)
 end
 
 local function _newdiary_content()
-    local rfile = io.open(os.getenv("HOME") .. "/.local/share/pandot/templates/documents/diary.md", "r")
+    local rfile = {
+        "---",
+        "author: {fullname}",
+        "title: {diaryname}",
+        "subtitle: {projectname}",
+        "date: {date}",
+        "docstyle: diary",
+        "---",
+    }
     local templatetable = {}
     local filename = vim.fn.system("id -F"):gsub("\n", "")
     local replacetable = {
@@ -103,7 +111,7 @@ local function _newdiary_content()
         docstyle = "diary",
     }
     local locline = ""
-    for line in rfile:lines() do
+    for _, line in ipairs(rfile) do
         locline = line
         for key, value in pairs(replacetable) do --actualcode
             locline = locline:gsub("{" .. key .. "}", value)
@@ -200,35 +208,35 @@ function m.openTagInput()
     _openTag(taginput)
     vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
     if altfile ~= "" then
-        vim.fn.setreg("#",altfile)
+        vim.fn.setreg("#", altfile)
     end
 end
 
 function m.liveGrep()
     local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
-    require('telescope.builtin').live_grep{
-            ctags_file = vim.fn.tagfiles()[1],
-            attach_mappings = function(prompt_bufnr)
-                require("telescope.actions.set").select:enhance({
-                    post = function()
-                        if vim.api.nvim_buf_get_name(0) ~= "" then
-                            vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
-                        end
-                    end,
-                })
-                require("telescope.actions").close:enhance({
-                    post = function()
-                        if vim.api.nvim_buf_get_name(0) ~= "" then
-                            vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
-                        end
-                    end,
-                })
-                return true
-            end,
-}
+    require("telescope.builtin").live_grep({
+        ctags_file = vim.fn.tagfiles()[1],
+        attach_mappings = function(prompt_bufnr)
+            require("telescope.actions.set").select:enhance({
+                post = function()
+                    if vim.api.nvim_buf_get_name(0) ~= "" then
+                        vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                    end
+                end,
+            })
+            require("telescope.actions").close:enhance({
+                post = function()
+                    if vim.api.nvim_buf_get_name(0) ~= "" then
+                        vim.cmd("silent! bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+                    end
+                end,
+            })
+            return true
+        end,
+    })
     if altfile ~= "" then
-        vim.fn.setreg("#",altfile)
+        vim.fn.setreg("#", altfile)
     end
 end
 
@@ -256,7 +264,7 @@ function m.searchTags()
         end,
     })
     if altfile ~= "" then
-        vim.fn.setreg("#",altfile)
+        vim.fn.setreg("#", altfile)
     end
 end
 
