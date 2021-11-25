@@ -387,7 +387,6 @@ function m.capture()
 	    au!
 	autocmd WinClosed,BufDelete,WinLeave <buffer=]] .. buf .. "> ++once lua require'panotes.commands'.close_capture(" .. buf .. "," .. bufname .. [[)
         augroup END]])
-    vim.api.nvim_feedkeys("i", "t", false)
 end
 
 function m.load_command(command)
