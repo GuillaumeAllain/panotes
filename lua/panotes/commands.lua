@@ -169,7 +169,6 @@ end
 function m.openDiary()
     local buffer_info = _open_diary_buffer()
     vim.api.nvim_exec("buffer " .. buffer_info.number, {})
-    vim.api.nvim_call_function("pandoc#folding#Init", {})
 end
 
 function m.openJournal()
@@ -243,7 +242,7 @@ end
 function m.searchTags()
     local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
-    _show_tags({
+    require("telescope.builtin").tags({
         ctags_file = vim.fn.tagfiles()[1],
         attach_mappings = function(prompt_bufnr)
             require("telescope.actions.set").select:enhance({
