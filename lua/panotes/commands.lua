@@ -103,6 +103,7 @@ local function _newdiary_content()
     }
     local templatetable = {}
     local filename = vim.fn.system("id -F"):gsub("\n", "")
+    local habits = vim.fn.systemlist("get_habit --no-cal --list")
     local replacetable = {
         fullname = filename,
         diaryname = "Notes du " .. os.date("%Y-%m-%d"),
@@ -117,6 +118,11 @@ local function _newdiary_content()
             locline = locline:gsub("{" .. key .. "}", value)
         end
         templatetable[#templatetable + 1] = locline
+    end
+    templatetable[#templatetable + 1] = ""
+    templatetable[#templatetable + 1] = "# Habitudes"
+    for _, line in ipairs(habits) do
+        templatetable[#templatetable + 1] = line
     end
     return templatetable
 end
