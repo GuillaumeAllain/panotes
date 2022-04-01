@@ -103,7 +103,7 @@ local function _newdiary_content()
     }
     local templatetable = {}
     local filename = vim.fn.system("id -F"):gsub("\n", "")
-    local habits = vim.fn.systemlist("get_habit --no-cal --list")
+    local habits = vim.fn.systemlist("habits --no-cal --list")
     local replacetable = {
         fullname = filename,
         diaryname = "Notes du " .. os.date("%Y-%m-%d"),
