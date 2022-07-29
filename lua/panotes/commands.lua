@@ -12,14 +12,15 @@ function _G.Panotes_tags(arglead, cmdline, cursorpos)
     local taglist_processed = {}
     for _, tag in ipairs(taglist_raw) do
         local append = true
+        local tag_name = tag.name:sub(2)
         for _, previous_tags in ipairs(taglist_processed) do
-            if tag.name == previous_tags then
+            if tag_name == previous_tags then
                 append = false
                 break
             end
         end
         if append then
-            taglist_processed[#taglist_processed + 1] = tag.name
+            taglist_processed[#taglist_processed + 1] = tag_name
         end
     end
     return api.nvim_call_function("join", { taglist_processed, "\n" })
@@ -207,6 +208,7 @@ function m.openTagInput()
     local altfile = vim.fn.getreg("%")
     vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
     local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
+    taginput = "#" .. taginput
     if taginput == nil then
         return
     end
