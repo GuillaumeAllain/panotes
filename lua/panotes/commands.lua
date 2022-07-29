@@ -187,18 +187,20 @@ function m.openJournal()
     local filetable = {}
     for _, value in ipairs(output) do
         filename = _get_filename_from_path(value)
-        datetime = _get_datetime_from_journal_filename(filename)
-        datestring = os.date("%B %Y", datetime):gsub("^%l", string.upper)
-        if month ~= datestring then
-            if month ~= "" then
+        if string.match(filename, "^%d%d%d%d%d%d%d%d.md$") then
+            datetime = _get_datetime_from_journal_filename(filename)
+            datestring = os.date("%B %Y", datetime):gsub("^%l", string.upper)
+            if month ~= datestring then
+                if month ~= "" then
+                    filetable[#filetable + 1] = " "
+                end
+                month = datestring
+                filetable[#filetable + 1] = "# " .. month
                 filetable[#filetable + 1] = " "
             end
-            month = datestring
-            filetable[#filetable + 1] = "# " .. month
-            filetable[#filetable + 1] = " "
+            datestring = os.date("%A le %d", datetime)
+            filetable[#filetable + 1] = datestring .. string.rep(" ", 15 - #datestring) .. "journal/" .. filename
         end
-        datestring = os.date("%A le %d", datetime)
-        filetable[#filetable + 1] = datestring .. string.rep(" ", 15 - #datestring) .. "journal/" .. filename
     end
     m.change_cwd_to_notes_dir()
     _opentemppandocbuff(filetable, { directory = vim.fn.expand("$NOTES_DIR/journal") })
