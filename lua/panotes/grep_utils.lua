@@ -4,7 +4,7 @@ local pandoc_filters_path = vim.api.nvim_get_runtime_file("lua/panotes", true)[1
 
 local function _get_pandoc_command(regex)
 	local pandoc_command = {
-		"/usr/local/bin/pandoc",
+		"pandoc",
 		"-M greppattern=" .. regex,
 		"-M block_top=" .. 2,
 		"-L "..pandoc_filters_path.."greppattern.lua ",
