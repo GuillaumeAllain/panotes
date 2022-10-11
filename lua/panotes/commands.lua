@@ -7,7 +7,26 @@ function m.change_cwd_to_notes_dir()
 	vim.cmd("cd $NOTES_DIR/")
 end
 
-function _G.Panotes_tags(arglead, cmdline, cursorpos)
+-- function _G.Panotes_tags(arglead, cmdline, cursorpos)
+-- 	local taglist_raw = vim.fn.taglist("/*", vim.fn.tagfiles()[1])
+-- 	local taglist_processed = {}
+-- 	for _, tag in ipairs(taglist_raw) do
+-- 		local append = true
+-- 		local tag_name = tag.name:sub(2)
+-- 		for _, previous_tags in ipairs(taglist_processed) do
+-- 			if tag_name == previous_tags then
+-- 				append = false
+-- 				break
+-- 			end
+-- 		end
+-- 		if append then
+-- 			taglist_processed[#taglist_processed + 1] = tag_name
+-- 		end
+-- 	end
+-- 	return api.nvim_call_function("join", { taglist_processed, "\n" })
+-- end
+
+function m.panotes_tags()
 	local taglist_raw = vim.fn.taglist("/*", vim.fn.tagfiles()[1])
 	local taglist_processed = {}
 	for _, tag in ipairs(taglist_raw) do
@@ -23,7 +42,8 @@ function _G.Panotes_tags(arglead, cmdline, cursorpos)
 			taglist_processed[#taglist_processed + 1] = tag_name
 		end
 	end
-	return api.nvim_call_function("join", { taglist_processed, "\n" })
+	-- return api.nvim_call_function("join", { taglist_processed, "\n" })
+	return taglist_processed
 end
 
 function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
@@ -75,11 +95,6 @@ local function _panotes_file_list(input_tag)
 		end
 	end
 	return file_list
-end
-
-local function _openTag(tag)
-	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
-	_opentemppandocbuff(result, {})
 end
 
 local function _get_filename_from_path(path)
@@ -206,19 +221,39 @@ function m.openJournal()
 	_opentemppandocbuff(filetable, { directory = vim.fn.expand("$NOTES_DIR/journal") })
 end
 
+local function _openTag(tag)
+	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
+	api.nvim_command("bd!")
+	_opentemppandocbuff(result, {})
+end
+
 function m.openTagInput()
-	local altfile = vim.fn.getreg("%")
-	vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
-	local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
-	taginput = "#" .. taginput
-	if taginput == nil then
-		return
-	end
-	_openTag(taginput)
-	vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+	local altfile = vim.fn.getreg("#")
+	local localfile = vim.fn.getreg("%")
+
+	local notes_ft = vim.fn.expand("$NOTES_DIR/.notes")
+	vim.cmd("nos e " .. notes_ft)
+	local tags = m.panotes_tags()
+	api.nvim_command("bd!")
 	if altfile ~= "" then
 		vim.fn.setreg("#", altfile)
+	else
+		vim.cmd([["let @# = ''"]])
 	end
+	-- print(vim.inspect(tags))
+	-- vim.cmd("bw " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+	-- local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
+	vim.ui.select(tags, {
+		prompt = "Tag to search: ",
+	}, function(choice)
+		local taginput = choice
+		if taginput == nil then
+			return
+		end
+		taginput = "#" .. taginput
+		vim.cmd("nos e " .. notes_ft)
+		_openTag(taginput)
+	end)
 end
 
 function m.liveGrep()
