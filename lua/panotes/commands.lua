@@ -319,7 +319,7 @@ function m.get_capture_buffer()
 	local buffer_number = nil
 
 	for k in pairs(buffer_list) do
-		if vim.fn.bufname(buffer_list[k].bufnr) == "PanotesCapture" then
+		if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://Capture" then
 			buffer_number = vim.fn.deepcopy(buffer_list[k].bufnr)
 			create_buffer = false
 			break
@@ -332,7 +332,7 @@ function m.get_capture_buffer()
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
 		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
 		vim.api.nvim_buf_set_option(buffer_number, "ft", "pandoc")
-		vim.api.nvim_buf_set_name(buffer_number, "PanotesCapture")
+		vim.api.nvim_buf_set_name(buffer_number, "panotes://Capture")
 	end
 
 	return buffer_number
@@ -345,7 +345,7 @@ function m.get_capturename_buffer()
 	local buffer_number = nil
 
 	for k in pairs(buffer_list) do
-		if vim.fn.bufname(buffer_list[k].bufnr) == "PanotesCaptureName" then
+		if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://CaptureName" then
 			buffer_number = vim.fn.deepcopy(buffer_list[k].bufnr)
 			create_buffer = false
 			break
@@ -357,7 +357,7 @@ function m.get_capturename_buffer()
 
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
 		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
-		vim.api.nvim_buf_set_name(buffer_number, "PanotesCaptureName")
+		vim.api.nvim_buf_set_name(buffer_number, "panotes://CaptureName")
 		vim.api.nvim_buf_set_lines(buffer_number, 0, -1, false, { "  Panotes Capture " })
 	end
 
