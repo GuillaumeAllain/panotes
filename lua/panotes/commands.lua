@@ -7,7 +7,26 @@ function m.change_cwd_to_notes_dir()
 	vim.cmd("cd $NOTES_DIR/")
 end
 
-function _G.Panotes_tags(arglead, cmdline, cursorpos)
+-- function _G.Panotes_tags(arglead, cmdline, cursorpos)
+-- 	local taglist_raw = vim.fn.taglist("/*", vim.fn.tagfiles()[1])
+-- 	local taglist_processed = {}
+-- 	for _, tag in ipairs(taglist_raw) do
+-- 		local append = true
+-- 		local tag_name = tag.name:sub(2)
+-- 		for _, previous_tags in ipairs(taglist_processed) do
+-- 			if tag_name == previous_tags then
+-- 				append = false
+-- 				break
+-- 			end
+-- 		end
+-- 		if append then
+-- 			taglist_processed[#taglist_processed + 1] = tag_name
+-- 		end
+-- 	end
+-- 	return api.nvim_call_function("join", { taglist_processed, "\n" })
+-- end
+
+function m.panotes_tags()
 	local taglist_raw = vim.fn.taglist("/*", vim.fn.tagfiles()[1])
 	local taglist_processed = {}
 	for _, tag in ipairs(taglist_raw) do
@@ -23,7 +42,8 @@ function _G.Panotes_tags(arglead, cmdline, cursorpos)
 			taglist_processed[#taglist_processed + 1] = tag_name
 		end
 	end
-	return api.nvim_call_function("join", { taglist_processed, "\n" })
+	-- return api.nvim_call_function("join", { taglist_processed, "\n" })
+	return taglist_processed
 end
 
 function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
@@ -75,11 +95,6 @@ local function _panotes_file_list(input_tag)
 		end
 	end
 	return file_list
-end
-
-local function _openTag(tag)
-	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
-	_opentemppandocbuff(result, {})
 end
 
 local function _get_filename_from_path(path)
@@ -206,19 +221,39 @@ function m.openJournal()
 	_opentemppandocbuff(filetable, { directory = vim.fn.expand("$NOTES_DIR/journal") })
 end
 
+local function _openTag(tag)
+	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
+	api.nvim_command("bd!")
+	_opentemppandocbuff(result, {})
+end
+
 function m.openTagInput()
-	local altfile = vim.fn.getreg("%")
-	vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
-	local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
-	taginput = "#" .. taginput
-	if taginput == nil then
-		return
-	end
-	_openTag(taginput)
-	vim.cmd("bw " .. vim.fn.fnameescape(vim.fn.resolve(vim.fn.expand("$NOTES_DIR/.notes"))))
+	local altfile = vim.fn.getreg("#")
+	local localfile = vim.fn.getreg("%")
+
+	local notes_ft = vim.fn.expand("$NOTES_DIR/.notes")
+	vim.cmd("nos e " .. notes_ft)
+	local tags = m.panotes_tags()
+	api.nvim_command("bd!")
 	if altfile ~= "" then
 		vim.fn.setreg("#", altfile)
+	else
+		vim.cmd([["let @# = ''"]])
 	end
+	-- print(vim.inspect(tags))
+	-- vim.cmd("bw " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
+	-- local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
+	vim.ui.select(tags, {
+		prompt = "Tag to search: ",
+	}, function(choice)
+		local taginput = choice
+		if taginput == nil then
+			return
+		end
+		taginput = "#" .. taginput
+		vim.cmd("nos e " .. notes_ft)
+		_openTag(taginput)
+	end)
 end
 
 function m.liveGrep()
@@ -284,7 +319,7 @@ function m.get_capture_buffer()
 	local buffer_number = nil
 
 	for k in pairs(buffer_list) do
-		if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://capture" then
+		if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://Capture" then
 			buffer_number = vim.fn.deepcopy(buffer_list[k].bufnr)
 			create_buffer = false
 			break
@@ -297,37 +332,37 @@ function m.get_capture_buffer()
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
 		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
 		vim.api.nvim_buf_set_option(buffer_number, "ft", "pandoc")
-		vim.api.nvim_buf_set_name(buffer_number, "panotes://capture")
+		vim.api.nvim_buf_set_name(buffer_number, "panotes://Capture")
 	end
 
 	return buffer_number
 end
 
--- function m.get_capturename_buffer()
---     -- Returns build terminal handle. If not found, it creates it
---     local buffer_list = vim.fn.getbufinfo()
---     local create_buffer = true
---     local buffer_number = nil
+function m.get_capturename_buffer()
+	-- Returns build terminal handle. If not found, it creates it
+	local buffer_list = vim.fn.getbufinfo()
+	local create_buffer = true
+	local buffer_number = nil
 
---     for k in pairs(buffer_list) do
---         if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://captureName" then
---             buffer_number = vim.fn.deepcopy(buffer_list[k].bufnr)
---             create_buffer = false
---             break
---         end
---     end
+	for k in pairs(buffer_list) do
+		if vim.fn.bufname(buffer_list[k].bufnr) == "panotes://CaptureName" then
+			buffer_number = vim.fn.deepcopy(buffer_list[k].bufnr)
+			create_buffer = false
+			break
+		end
+	end
 
---     if create_buffer then
---         buffer_number = vim.api.nvim_create_buf(false, false)
+	if create_buffer then
+		buffer_number = vim.api.nvim_create_buf(false, false)
 
---         -- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
---         vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
---         vim.api.nvim_buf_set_name(buffer_number, "panotes://captureName")
---         vim.api.nvim_buf_set_lines(buffer_number, 0, -1, false, { "  Panotes Capture " })
---     end
+		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
+		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
+		vim.api.nvim_buf_set_name(buffer_number, "panotes://CaptureName")
+		vim.api.nvim_buf_set_lines(buffer_number, 0, -1, false, { "  Panotes Capture " })
+	end
 
---     return buffer_number
--- end
+	return buffer_number
+end
 
 local function _append_to_buffer(buffer_info, lines)
 	vim.api.nvim_buf_set_lines(buffer_info.number, -1, -1, false, lines)
