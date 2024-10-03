@@ -1,6 +1,6 @@
 local api = vim.api
 local scandir = require("plenary.scandir")
-local _show_tags = require("telescope.builtin").tags
+-- local _show_tags = require("telescope.builtin").tags
 local m = {}
 
 function m.change_cwd_to_notes_dir()
@@ -165,7 +165,7 @@ local function _open_file_buffer(filename)
 	if not already_open then
 		buffer_number = vim.api.nvim_create_buf(true, false)
 		vim.api.nvim_buf_set_name(buffer_number, vim.fn.fnameescape(vim.fn.expand(filename)))
-		vim.api.nvim_buf_set_option(buffer_number, "filetype", "pandoc")
+		vim.api.nvim_set_option_value("filetype", "pandoc", { buf = buffer_number })
 		if vim.fn.filereadable(filename) == 1 then
 			vim.api.nvim_buf_call(buffer_number, function()
 				vim.cmd("silent exec ':e|w!'")
@@ -190,7 +190,7 @@ end
 
 function m.openDiary()
 	local buffer_info = _open_diary_buffer()
-	vim.api.nvim_exec("buffer " .. buffer_info.number, {})
+	vim.api.nvim_exec2("buffer " .. buffer_info.number, {})
 end
 
 function m.openJournal()
@@ -218,13 +218,15 @@ function m.openJournal()
 		end
 	end
 	m.change_cwd_to_notes_dir()
-	_opentemppandocbuff(filetable, { directory = vim.fn.expand("$NOTES_DIR/journal") })
+	-- _opentemppandocbuff(filetable, { directory = vim.fn.expand("$NOTES_DIR/journal") })
+	_opentemppandocbuff(filetable)
 end
 
 local function _openTag(tag)
 	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
 	api.nvim_command("bd!")
-	_opentemppandocbuff(result, {})
+	-- _opentemppandocbuff(result, {})
+	_opentemppandocbuff(result)
 end
 
 function m.openTagInput()
@@ -330,8 +332,10 @@ function m.get_capture_buffer()
 		buffer_number = vim.api.nvim_create_buf(false, true)
 
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
-		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
-		vim.api.nvim_buf_set_option(buffer_number, "ft", "pandoc")
+		-- vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
+		-- vim.api.nvim_buf_set_option(buffer_number, "ft", "pandoc")
+                vim.api.nvim_set_option_value("buftype", "nofile", {buf=buffer_number})
+                vim.api.nvim_set_option_value("ft", "pandoc", {buf=buffer_number})
 		vim.api.nvim_buf_set_name(buffer_number, "panotes://Capture")
 	end
 
@@ -356,7 +360,8 @@ function m.get_capturename_buffer()
 		buffer_number = vim.api.nvim_create_buf(false, false)
 
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
-		vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
+		-- vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
+                vim.api.nvim_set_option_value("buftype", "nofile", {buf=buffer_number})
 		vim.api.nvim_buf_set_name(buffer_number, "panotes://CaptureName")
 		vim.api.nvim_buf_set_lines(buffer_number, 0, -1, false, { "  Panotes Capture " })
 	end
@@ -413,7 +418,7 @@ function m.capture()
 		col = vim.fn.ceil((vim.o.columns / 2) - (vim.o.columns / 4)) + vim.o.cmdheight,
 		row = vim.fn.ceil((vim.o.lines / 2) - (vim.o.lines / 20)),
 		title = "Panotes Capture",
-                title_pos = "center",
+		title_pos = "center",
 	}
 	-- local window_name_config = {
 	--     relative = "editor",
