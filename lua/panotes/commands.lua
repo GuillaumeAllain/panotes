@@ -234,7 +234,7 @@ function m.openTagInput()
 	vim.cmd("nos e " .. vim.fn.expand("$NOTES_DIR/.notes"))
 	local tags = m.panotes_tags()
 	vim.api.nvim_set_option_value("buflisted", false, { buf = vim.fn.bufnr() })
-	vim.cmd("e")
+	vim.cmd("bd!")
 	if altfile ~= "" then
 		vim.fn.setreg("#", altfile)
 	else
