@@ -1,6 +1,5 @@
 local api = vim.api
 local scandir = require("plenary.scandir")
--- local _show_tags = require("telescope.builtin").tags
 local m = {}
 
 function m.change_cwd_to_notes_dir()
@@ -46,7 +45,7 @@ function m.panotes_tags()
 	return taglist_processed
 end
 
-function _G.Panotes_folders_complete(arglead, cmdline, cursorpos)
+function _G.Panotes_folders_complete(arglead, _, _)
 	local output = {}
 	local current_dir = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/"))
 	local current_dir_arg = vim.fn.resolve(vim.fn.expand("$NOTES_DIR/" .. arglead))
@@ -223,28 +222,25 @@ function m.openJournal()
 end
 
 local function _openTag(tag)
+	vim.cmd("nos e " .. vim.fn.expand("$NOTES_DIR/.notes"))
 	local result = require("panotes.grep_utils").grep_file_list(_panotes_file_list(tag), tag)
-	api.nvim_command("bd!")
-	-- _opentemppandocbuff(result, {})
-	_opentemppandocbuff(result)
+	vim.api.nvim_set_option_value("buflisted", false, { buf = vim.fn.bufnr() })
+	_opentemppandocbuff(result, _)
 end
 
 function m.openTagInput()
 	local altfile = vim.fn.getreg("#")
-	local localfile = vim.fn.getreg("%")
 
-	local notes_ft = vim.fn.expand("$NOTES_DIR/.notes")
-	vim.cmd("nos e " .. notes_ft)
+	vim.cmd("nos e " .. vim.fn.expand("$NOTES_DIR/.notes"))
 	local tags = m.panotes_tags()
-	api.nvim_command("bd!")
+	vim.api.nvim_set_option_value("buflisted", false, { buf = vim.fn.bufnr() })
+	vim.cmd("e")
 	if altfile ~= "" then
 		vim.fn.setreg("#", altfile)
 	else
 		vim.cmd([["let @# = ''"]])
 	end
-	-- print(vim.inspect(tags))
-	-- vim.cmd("bw " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
-	-- local taginput = vim.fn.input({ prompt = "Tag to search: ", completion = "custom,v:lua.Panotes_tags" })
+
 	vim.ui.select(tags, {
 		prompt = "Tag to search: ",
 	}, function(choice)
@@ -253,7 +249,6 @@ function m.openTagInput()
 			return
 		end
 		taginput = "#" .. taginput
-		vim.cmd("nos e " .. notes_ft)
 		_openTag(taginput)
 	end)
 end
@@ -263,7 +258,7 @@ function m.liveGrep()
 	vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
 	require("telescope.builtin").live_grep({
 		ctags_file = vim.fn.tagfiles()[1],
-		attach_mappings = function(prompt_bufnr)
+		attach_mappings = function(_)
 			require("telescope.actions.set").select:enhance({
 				post = function()
 					if vim.api.nvim_buf_get_name(0) ~= "" then
@@ -291,7 +286,7 @@ function m.searchTags()
 	vim.cmd("e " .. vim.fn.expand("$NOTES_DIR/") .. ".notes")
 	require("telescope.builtin").tags({
 		ctags_file = vim.fn.tagfiles()[1],
-		attach_mappings = function(prompt_bufnr)
+		attach_mappings = function(_)
 			require("telescope.actions.set").select:enhance({
 				post = function()
 					if vim.api.nvim_buf_get_name(0) ~= "" then
@@ -332,10 +327,8 @@ function m.get_capture_buffer()
 		buffer_number = vim.api.nvim_create_buf(false, true)
 
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
-		-- vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
-		-- vim.api.nvim_buf_set_option(buffer_number, "ft", "pandoc")
-                vim.api.nvim_set_option_value("buftype", "nofile", {buf=buffer_number})
-                vim.api.nvim_set_option_value("ft", "pandoc", {buf=buffer_number})
+		vim.api.nvim_set_option_value("buftype", "nofile", { buf = buffer_number })
+		vim.api.nvim_set_option_value("ft", "pandoc", { buf = buffer_number })
 		vim.api.nvim_buf_set_name(buffer_number, "panotes://Capture")
 	end
 
@@ -360,8 +353,8 @@ function m.get_capturename_buffer()
 		buffer_number = vim.api.nvim_create_buf(false, false)
 
 		-- Set the buffer type to "prompt" to give it special behaviour (:h prompt-buffer)
-		-- vim.api.nvim_buf_set_option(buffer_number, "buftype", "nofile")
-                vim.api.nvim_set_option_value("buftype", "nofile", {buf=buffer_number})
+
+		vim.api.nvim_set_option_value("buftype", "nofile", { buf = buffer_number })
 		vim.api.nvim_buf_set_name(buffer_number, "panotes://CaptureName")
 		vim.api.nvim_buf_set_lines(buffer_number, 0, -1, false, { "  Panotes Capture " })
 	end
@@ -379,7 +372,7 @@ local function _append_to_buffer(buffer_info, lines)
 	end
 end
 
-function m.close_capture(buf, winname)
+function m.close_capture(buf, _)
 	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 	table.insert(lines, 1, "")
 	-- vim.api.nvim_buf_delete(bufname, {})
